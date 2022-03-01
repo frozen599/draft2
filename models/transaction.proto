@@ -1,0 +1,11 @@
+syntax="proto3";
+
+package models;
+
+message Transaction {
+    string from = 1;
+    string to = 2;
+    string amount = 3;
+    int64 nonce = 4;
+    string sign = 5;
+}
