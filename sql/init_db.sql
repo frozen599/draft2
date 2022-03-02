@@ -1,5 +1,5 @@
 CREATE TABLE accounts (
-    id serial PRIMARY KEY,
+    id int PRIMARY KEY,
     pub_key text,
     priv_key text,
     amount real,

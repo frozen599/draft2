@@ -1,20 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 
 	"github.com/frozen599/job-interview/db"
 	"github.com/frozen599/job-interview/helpers"
-	_ "github.com/lib/pq"
 )
 
 const (
 	host     = "localhost"
 	port     = 5432
 	user     = "postgres"
-	password = "leo123456"
+	password = "123456"
 	dbname   = "postgres"
 )
 
@@ -48,7 +48,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer sqlDB.Close()
+	defer sqlDB.Close(context.Background())
 
 	accountRepo := db.NewAccountRepo(sqlDB)
 	srv3, err := net.Listen("tcp", "localhost:5003")

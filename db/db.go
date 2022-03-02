@@ -1,14 +1,17 @@
 package db
 
-import "database/sql"
+import (
+	"context"
 
-func InitDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", dsn)
+	"github.com/jackc/pgx/v4"
+)
+
+func InitDB(dsn string) (*pgx.Conn, error) {
+	db, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
 	if err != nil {
 		return nil, err
 	}

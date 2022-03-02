@@ -1,7 +1,7 @@
 package db
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"math/big"
@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/frozen599/job-interview/models"
+	"github.com/jackc/pgx/v4"
 )
 
 type Account struct {
@@ -23,33 +24,24 @@ type Account struct {
 }
 
 type AccountRepo struct {
-	DB *sql.DB
+	DB *pgx.Conn
 }
 
-func NewAccountRepo(db *sql.DB) *AccountRepo {
+func NewAccountRepo(db *pgx.Conn) *AccountRepo {
 	return &AccountRepo{
 		DB: db,
 	}
 }
 
-func (r *AccountRepo) UpdateAccountAmount(id int, amount float64) (int, error) {
-	stmt := `
-	UPDATE accounts
-	SET amount = amount + ?
-	WHERE id = ?
-	`
+func (r *AccountRepo) UpdateAccountAmount(id int, amount float64) error {
+	stmt := fmt.Sprintf("UPDATE accounts SET amount = amount+ %f WHERE id=$1", amount)
 
-	result, err := r.DB.Exec(stmt)
+	_, err := r.DB.Exec(context.Background(), stmt, id)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	accountID, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(accountID), nil
+	return nil
 }
 
 func (r *AccountRepo) GetAccount(id int) (*Account, error) {
@@ -57,10 +49,10 @@ func (r *AccountRepo) GetAccount(id int) (*Account, error) {
 		`
 	SELECT id, address, amount, nonce
 	FROM accounts
-	WHERE id = ?
+	WHERE id=$1
 	`
 	var acc Account
-	err := r.DB.QueryRow(stmt, id).Scan(&acc.ID, &acc.Address, &acc.Amount, &acc.Nonce)
+	err := r.DB.QueryRow(context.Background(), stmt, id).Scan(&acc.ID, &acc.Address, &acc.Amount, &acc.Nonce)
 	if err != nil {
 		return nil, err
 	}
@@ -84,19 +76,14 @@ func generateSignature(tx *models.Transaction, privateKey string) {
 	tx.Sign = hexutil.Encode(signature)
 }
 
-func (r *AccountRepo) CreateTransaction(from, to, amount string, fromAccountID int) *models.Transaction {
+func (r *AccountRepo) CreateTransaction(from, to, amount string, privateKey string) *models.Transaction {
 	tx := models.Transaction{}
 	tx.From = from
 	tx.To = to
 	balance, _ := strconv.ParseInt(amount, 10, 64)
 	tx.Amount = fmt.Sprintf("%s", math.U256(big.NewInt(balance)))
 
-	acc, err := r.GetAccount(fromAccountID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	generateSignature(&tx, acc.PrivKey)
+	generateSignature(&tx, privateKey)
 
 	return &tx
 }
