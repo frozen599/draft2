@@ -43,7 +43,7 @@ func main() {
 	}
 
 	privateKey := "0fb20ecbb26fee338c11eaf09440b06eb0c05086003e97a97e1f5a64e8cc9248"
-	tx := accountRepo.CreateTransaction("account1", "account3", "300", privateKey)
+	tx := accountRepo.CreateTransaction("account2", "account3", "300", privateKey)
 	fmt.Println(tx)
 	data, _ := proto.Marshal(tx)
 	fmt.Println(data)
