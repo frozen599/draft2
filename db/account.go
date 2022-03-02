@@ -1,6 +1,17 @@
 package db
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"math/big"
+	"strconv"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/frozen599/job-interview/models"
+)
 
 type Account struct {
 	ID      int
@@ -23,8 +34,8 @@ func NewAccountRepo(db *sql.DB) *AccountRepo {
 
 func (r *AccountRepo) UpdateAccountAmount(id int, amount float64) (int, error) {
 	stmt := `
-	UPDATE accounts a
-	SET a.amount = a.amount + ?
+	UPDATE accounts
+	SET amount = amount + ?
 	WHERE id = ?
 	`
 
@@ -55,4 +66,37 @@ func (r *AccountRepo) GetAccount(id int) (*Account, error) {
 	}
 
 	return &acc, nil
+}
+
+func generateSignature(tx *models.Transaction, privateKey string) {
+	pk, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := []byte(tx.Amount)
+	hash := crypto.Keccak256Hash(data)
+	signature, err := crypto.Sign(hash.Bytes(), pk)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tx.Sign = hexutil.Encode(signature)
+}
+
+func (r *AccountRepo) CreateTransaction(from, to, amount string, fromAccountID int) *models.Transaction {
+	tx := models.Transaction{}
+	tx.From = from
+	tx.To = to
+	balance, _ := strconv.ParseInt(amount, 10, 64)
+	tx.Amount = fmt.Sprintf("%s", math.U256(big.NewInt(balance)))
+
+	acc, err := r.GetAccount(fromAccountID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	generateSignature(&tx, acc.PrivKey)
+
+	return &tx
 }
