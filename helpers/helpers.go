@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/frozen599/job-interview/db"
@@ -23,7 +24,7 @@ func HandleConnSrv2(conn net.Conn) {
 	defer conn.Close()
 }
 
-func HandleConnSrv3(conn net.Conn, r *db.AccountRepo, fromAccID int) {
+func HandleConnSrv3(conn net.Conn, r *db.AccountRepo) {
 	defer conn.Close()
 
 	for {
@@ -44,9 +45,25 @@ func HandleConnSrv3(conn net.Conn, r *db.AccountRepo, fromAccID int) {
 			return
 		}
 
-		fromAccount, _ := r.GetAccount(fromAccID)
+		// See which server is sending request to server 3
+		var acc *db.Account
+		if strings.Compare(tx.From, "server1") == 0 {
+			acc, err = r.GetAccount(1)
+			if err != nil {
+				io.WriteString(conn, err.Error())
+				return
+			}
+		} else {
+			acc, err = r.GetAccount(2)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		}
+
+		// verify the amount that was sent
 		hashData := crypto.Keccak256Hash([]byte(tx.Amount))
-		verified := crypto.VerifySignature([]byte(fromAccount.PubKey), hashData.Bytes(), []byte(tx.Sign))
+		verified := crypto.VerifySignature([]byte(acc.PubKey), hashData.Bytes(), []byte(tx.Sign))
 		if !verified {
 			io.WriteString(conn, errors.New("error: transaction changed or malformed").Error())
 			return
@@ -54,9 +71,11 @@ func HandleConnSrv3(conn net.Conn, r *db.AccountRepo, fromAccID int) {
 
 		amount, _ := strconv.ParseFloat(tx.GetAmount(), 64)
 
+		// update amount of account 3
 		id, err := r.UpdateAccountAmount(3, amount)
 		if err != nil {
 			io.WriteString(conn, err.Error())
+			return
 		} else {
 			io.WriteString(conn, fmt.Sprintf("Successfully updated amount of account %d", id))
 		}
