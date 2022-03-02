@@ -1,5 +1,5 @@
 CREATE TABLE accounts (
-    id int PRIMARY KEY,
+    id serial PRIMARY KEY,
     pub_key text,
     priv_key text,
     amount real,
@@ -10,7 +10,7 @@ CREATE TABLE accounts (
 
 
 INSERT INTO accounts (pub_key, priv_key, address, amount, nonce)
-VALUES 
+VALUES
 ('04f6d4b5636f374a76fdacc9612d65e47a7bfecf3c17ac02a6318fa2815bb641b258ff79c1e5ccf3b13d394a764f1ca395ae879150eca67408000b3221f334a557', 
  '82e63b1ac40b27a84ce25ef17c865919586338447b70ebf0f037833d3872142d',
  '0x0b5253C570ae34E05F034A2836d0Cf09ebE10ECA',
