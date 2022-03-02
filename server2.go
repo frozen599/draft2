@@ -16,7 +16,7 @@ const (
 	host     = "localhost"
 	port     = 5432
 	user     = "postgres"
-	password = "123456"
+	password = "leo123456"
 	dbname   = "postgres"
 )
 
@@ -40,9 +40,7 @@ func main() {
 		return
 	}
 
-	acc, _ := accountRepo.GetAccount(2)
-	fmt.Println(acc)
-	tx := accountRepo.CreateTransaction("account2", "account3", "300", acc.PrivKey)
+	tx := accountRepo.CreateTransaction("account2", "account3", "300", "0fb20ecbb26fee338c11eaf09440b06eb0c05086003e97a97e1f5a64e8cc9248")
 	fmt.Println(tx)
 	data, _ := proto.Marshal(tx)
 	fmt.Println(data)
