@@ -10,8 +10,6 @@ import (
 
 	"github.com/frozen599/job-interview/db"
 	"github.com/golang/protobuf/proto"
-
-	_ "github.com/lib/pq"
 )
 
 const (
@@ -42,8 +40,8 @@ func main() {
 		return
 	}
 
-	privateKey := "82e63b1ac40b27a84ce25ef17c865919586338447b70ebf0f037833d3872142d"
-	tx := accountRepo.CreateTransaction("account1", "account3", "30", privateKey)
+	acc, _ := accountRepo.GetAccount(1)
+	tx := accountRepo.CreateTransaction("account1", "account3", "30", acc.PrivKey)
 	fmt.Println(tx)
 	data, _ := proto.Marshal(tx)
 	fmt.Println(data)
